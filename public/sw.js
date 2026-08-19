@@ -1,16 +1,19 @@
 /* ==========================================================================
-   sw.js — the "service worker". A little background helper the browser runs
-   so the app can be installed on a phone and still open when offline.
+   sw.js — the "service worker": a little background helper the browser runs so
+   the app installs on a phone and still opens offline.
    --------------------------------------------------------------------------
-   Strategy (kept deliberately simple for learning):
-   - On install, cache the app's "shell" (pages, styles, icons).
-   - For page/asset requests, serve from cache first, fall back to network.
-   - For API calls (/api/...), always go to the network (they need live data).
+   Strategy (kept simple, and safe for a single-page app):
+   - Cache the app's SHELL (the one page + its styles, script, icons).
+   - PAGE navigations: try the network first, fall back to the cached shell
+     when offline. (Network-first avoids the classic bug where a stale cached
+     page hangs after you deploy an update.)
+   - Static files (css/js/icons): serve from cache, fall back to network.
+   - API calls (/api/...): always go to the network — they need live data.
    Bump CACHE_VERSION whenever you change files so phones pick up the update.
    ========================================================================== */
-const CACHE_VERSION = "studybuddy-v1";
+const CACHE_VERSION = "studybuddy-v2";
 const SHELL = [
-  "/", "/index.html", "/result.html", "/chat.html", "/organizer.html",
+  "/",
   "/theme.css", "/styles.css", "/app.js", "/questions.js",
   "/manifest.json", "/icon.svg", "/icon-192.png", "/icon-512.png",
 ];
@@ -21,7 +24,6 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  // Delete old caches from previous versions.
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)))
@@ -31,11 +33,21 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-  // Never cache API calls — they must be live.
-  if (url.pathname.startsWith("/api/")) return;
-  // Cache-first for everything else in the shell.
+  const req = event.request;
+  if (req.method !== "GET") return;                       // only cache reads
+  const url = new URL(req.url);
+  if (url.pathname.startsWith("/api/")) return;           // never cache API calls
+
+  // Page navigations: network-first, fall back to the cached app shell.
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req).catch(() => caches.match("/", { ignoreSearch: true }))
+    );
+    return;
+  }
+
+  // Everything else (styles, script, icons): cache-first, then network.
   event.respondWith(
-    caches.match(event.request).then((hit) => hit || fetch(event.request))
+    caches.match(req).then((hit) => hit || fetch(req))
   );
 });

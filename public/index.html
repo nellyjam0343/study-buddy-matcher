@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Study Buddy — Sign up</title>
+  <title>Study Buddy</title>
+  <meta name="description" content="Answer a few questions, get matched with a study buddy, and say hi." />
   <meta name="theme-color" content="#ff5a4d" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/icon.svg" />
@@ -12,129 +13,47 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
-      <img class="logo" src="/icon.svg" alt="" />
-      <div>
-        <h1>Study Buddy</h1>
-        <p class="sub">Answer a few questions. Get matched. Say hi.</p>
-      </div>
-    </div>
+  <!-- ========================================================================
+       THE APP SHELL
+       This is the ONLY page in the app. Everything you see — the sign-up flow,
+       your match, the chat, the organizer — is drawn into <main id="view"> by
+       app.js and swapped in place, so it feels like a real app (no full page
+       reloads, no dead clicks). The top bar and the bottom tabs stay put.
+       ===================================================================== -->
+  <div id="app">
 
-    <form id="signup" class="card">
-      <h2>Tell us about you</h2>
-      <p class="hint">We use this to find you a good study partner.</p>
+    <!-- Top bar: brand on the left, who you're signed in as on the right. -->
+    <header class="topbar">
+      <a class="brand" href="#/" aria-label="Study Buddy home">
+        <img class="brand-logo" src="/icon.svg" alt="" />
+        <span class="brand-name">Study Buddy</span>
+      </a>
+      <div id="whoami" class="whoami" hidden></div>
+    </header>
 
-      <!-- SIGN-ON + PROFILE: name, email, age. Age powers the safety age-gate. -->
-      <label class="field">
-        <span>Your name</span>
-        <input type="text" id="name" required autocomplete="name" placeholder="Alex Rivera" />
-      </label>
-      <label class="field">
-        <span>Email</span>
-        <input type="email" id="email" required autocomplete="email" placeholder="alex@school.edu" />
-      </label>
-      <label class="field">
-        <span>Age <span class="sub">(used for the safety age-gate)</span></span>
-        <input type="number" id="age" required min="10" max="120" placeholder="19" />
-      </label>
+    <!-- The screen. app.js renders one view at a time in here. -->
+    <main id="view" class="view" aria-live="polite"></main>
 
-      <!-- The survey questions render here, straight from questions.js -->
-      <div id="questions"></div>
-
-      <p id="error" class="small" style="color:var(--accent)"></p>
-      <button type="submit" id="submit" class="block">Find my study buddy →</button>
-    </form>
-
-    <p class="nav center"><a href="/organizer.html">Organizer view →</a></p>
+    <!-- Bottom tabs: the three main places. Hidden during sign-up. -->
+    <nav id="tabbar" class="tabbar" hidden aria-label="Main navigation">
+      <button class="tab" data-tab="match" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm-8 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm0 2c-2.7 0-6 1.34-6 4v2h8v-2c0-.99.47-1.84 1.2-2.5A9.7 9.7 0 0 0 8 13Zm8 0c-.35 0-.74 0-1.15.05A4.4 4.4 0 0 1 16 17v2h6v-2c0-2.66-3.3-4-6-4Z"/></svg>
+        <span>Match</span>
+      </button>
+      <button class="tab" data-tab="chat" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2Zm3 6a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 7 9Zm5 0a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 12 9Zm5 0a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 17 9Z"/></svg>
+        <span>Chat</span>
+      </button>
+      <button class="tab" data-tab="organizer" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/></svg>
+        <span>Organizer</span>
+      </button>
+    </nav>
   </div>
 
-  <script src="/app.js"></script>
+  <!-- THE QUESTIONS (your survey) load first so the sign-up flow can draw itself. -->
   <script src="/questions.js"></script>
-  <script>
-    // ----- Render the survey from questions.js (handles the 3 question kinds) -----
-    const qRoot = document.getElementById("questions");
-
-    function fieldFor(q) {
-      // Build one question's HTML. "branch" follow-ups reuse this same function.
-      if (q.type === "text") {
-        return `<label class="field"><span>${q.label}</span>
-                  <input type="text" data-qid="${q.id}" /></label>`;
-      }
-      if (q.type === "select") {
-        const opts = q.options.map((o) => `<option value="${o}">${o}</option>`).join("");
-        // data-branch marks selects that reveal a follow-up question.
-        const isBranch = q.branch ? `data-branch="${q.id}"` : "";
-        return `<label class="field"><span>${q.label}</span>
-                  <select data-qid="${q.id}" ${isBranch}>
-                    <option value="" disabled selected>Choose…</option>${opts}
-                  </select></label>
-                <div id="branch-${q.id}"></div>`;
-      }
-      if (q.type === "multi") {
-        const rows = q.options.map((o) =>
-          `<label class="choice"><input type="checkbox" data-qid="${q.id}" value="${o}" /> ${o}</label>`
-        ).join("");
-        return `<label class="field"><span>${q.label}</span>
-                  <div class="choices">${rows}</div></label>`;
-      }
-      return "";
-    }
-
-    // Draw the base questions.
-    qRoot.innerHTML = window.QUESTIONS.map(fieldFor).join("");
-
-    // BRANCHING: when a branch-select changes, show the matching follow-up(s).
-    qRoot.addEventListener("change", (e) => {
-      const sel = e.target;
-      if (!sel.dataset.branch) return;
-      const q = window.QUESTIONS.find((x) => x.id === sel.dataset.branch);
-      const slot = document.getElementById("branch-" + q.id);
-      const followUps = (q.branch && q.branch[sel.value]) || [];
-      slot.innerHTML = followUps.map(fieldFor).join("");
-    });
-
-    // ----- Collect every visible answer into one object -----
-    function collectAnswers() {
-      const answers = {};
-      // text + select answers
-      qRoot.querySelectorAll("input[data-qid], select[data-qid]").forEach((el) => {
-        if (el.type === "checkbox") return; // handled below
-        if (el.value) answers[el.dataset.qid] = el.value;
-      });
-      // multi-select answers become arrays
-      qRoot.querySelectorAll("input[type=checkbox][data-qid]").forEach((cb) => {
-        if (!cb.checked) return;
-        (answers[cb.dataset.qid] = answers[cb.dataset.qid] || []).push(cb.value);
-      });
-      return answers;
-    }
-
-    // ----- Submit: create the profile, then go to the result screen -----
-    document.getElementById("signup").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById("submit");
-      const err = document.getElementById("error");
-      err.textContent = "";
-      btn.disabled = true; btn.textContent = "Saving…";
-      try {
-        const profile = await api("/api/signup", {
-          method: "POST",
-          body: JSON.stringify({
-            name: document.getElementById("name").value.trim(),
-            email: document.getElementById("email").value.trim(),
-            age: Number(document.getElementById("age").value),
-            answers: collectAnswers(),
-          }),
-        });
-        store.profileId = profile.id;
-        store.name = profile.name;
-        location.href = "/result.html";
-      } catch (ex) {
-        err.textContent = ex.message;
-        btn.disabled = false; btn.textContent = "Find my study buddy →";
-      }
-    });
-  </script>
+  <!-- The whole app. -->
+  <script src="/app.js"></script>
 </body>
 </html>

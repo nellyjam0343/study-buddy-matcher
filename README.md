@@ -1,6 +1,6 @@
 # Study Buddy Matcher
 
-> **PROGRESS:** ✅ Reference app is built, deployed, and working (rule-based matching, no API key needed). **NEXT for your group:** clone this repo, then start at [Make it yours → Step 1](#step-1-identity--design). Update this line whenever you finish a step so whoever picks it up next knows exactly where things stand.
+> **PROGRESS:** ✅ Reference app is built, deployed, and working — now with an app-like, step-by-step sign-up flow, a top bar + bottom tabs, and every screen wired up (rule-based matching, no API key needed). **NEXT for your group:** clone this repo, then start at [Make it yours → Step 1](#step-1-identity--design). Update this line whenever you finish a step so whoever picks it up next knows exactly where things stand.
 
 A working matching app you **clone and make your own**. A person signs up, answers a few questions, gets matched with a study buddy, sees *why*, and starts a conversation. It runs on the free tiers of Cloudflare.
 
@@ -12,6 +12,7 @@ A working matching app you **clone and make your own**. A person signs up, answe
 ## What this app is (in plain words)
 
 - A **website** that also **installs on a phone** like an app (that's a "PWA" — a web page with an icon and offline support).
+- It's a **single-page app**: one page that swaps screens in place — a step-by-step sign-up, your match, the chat, the organizer — with a top bar and bottom tabs that stay put, so it feels like a real app.
 - It stores people, matches, and messages in a **database** (Cloudflare D1, which is just SQLite — a single-file database).
 - The matching happens in **two layers**:
   - **Rules** — plain code with a safety net (never match certain people; score by shared answers). Works with no setup.
@@ -29,16 +30,15 @@ study-buddy-matcher/
 ├── package.json           ← handy shortcut commands (npm run ...)
 │
 ├── public/                ← everything the browser sees (the front of the app)
-│   ├── index.html         ← sign-up + the question flow
-│   ├── result.html        ← "here's your match, and why"
-│   ├── chat.html          ← the conversation
-│   ├── organizer.html     ← the whole pool + all matches (for whoever runs it)
-│   ├── questions.js        ← ⭐ THE QUESTIONS — change your survey here
-│   ├── theme.css           ← ⭐ THE DESIGN — colors, fonts, feel, all in one place
-│   ├── styles.css          ← layout (rarely needs editing)
-│   ├── app.js              ← small shared browser helpers
-│   ├── manifest.json       ← PWA info (name, colors, icons)
-│   ├── sw.js               ← service worker (makes it installable/offline)
+│   ├── index.html         ← the app shell: top bar, the screen, bottom tabs
+│   ├── app.js             ← ⭐ THE APP — the sign-up flow + all four screens
+│   ├── questions.js       ← ⭐ THE QUESTIONS — change your survey here
+│   ├── theme.css          ← ⭐ THE DESIGN — colors, fonts, feel, all in one place
+│   ├── styles.css         ← layout for the app shell (rarely needs editing)
+│   ├── result.html / chat.html / organizer.html ← tiny redirects that send old
+│   │                         links into the app (e.g. /organizer → the app)
+│   ├── manifest.json      ← PWA info (name, colors, icons)
+│   ├── sw.js              ← service worker (makes it installable/offline)
 │   └── icon.svg / icon-192.png / icon-512.png ← the app icon
 │
 └── functions/api/         ← the back of the app (runs on Cloudflare's servers)
@@ -90,7 +90,7 @@ Do these in order. Each step teaches one idea while you change it, and ends with
 - A hex code like `#ff5a4d` is just Red-Green-Blue in base-16. You don't need to memorize it — grab colors from a picker like [coolors.co](https://coolors.co).
 - Pick **one** accent color and use it only for actions (buttons, links). That's what makes an interface feel intentional instead of noisy.
 - **Contrast matters:** dark text on a light background, or light on dark. If you have to squint, it's wrong.
-- Rename the app: change `<title>` in each `public/*.html`, and `name`/`short_name` in `public/manifest.json`.
+- Rename the app: change the name in `public/index.html` (the `.brand-name` in the top bar and the `<title>`), and `name`/`short_name` in `public/manifest.json`.
 
 **Check it worked:** run `npm run dev`, open the app. Your button color changed everywhere. If it didn't, you edited the wrong variable — the names are commented in `theme.css`.
 
@@ -98,7 +98,7 @@ Do these in order. Each step teaches one idea while you change it, and ends with
 
 ### Step 2 — The questions
 
-**The idea:** the survey is one list in `public/questions.js`. The sign-up form draws itself from that list, and the matcher compares answers automatically. Change the list → the whole app follows. There are **three kinds** of question, and one of each is already in the file:
+**The idea:** the survey is one list in `public/questions.js`. The sign-up flow shows those questions **one screen at a time** (with a progress bar and Back/Next), and the matcher compares answers automatically. Change the list → the whole app follows. There are **three kinds** of question, and one of each is already in the file:
 
 1. **Simple** — pick one (`type: "select"`) or type text (`type: "text"`).
 2. **Branching** — one answer reveals a follow-up. Look at the `mode` question: picking "In person" asks *where*; picking "Online" asks *which platform*. That's the `branch` block — `{ "In person": [ ...follow-up... ], "Online": [ ... ] }`.
@@ -117,7 +117,7 @@ Do these in order. Each step teaches one idea while you change it, and ends with
 
 **Check it worked:** `npm run dev`, reload sign-up. Your new question appears. Sign up two people who both pick "Coffee" and their match reason will include "Coffee" — because the matcher compares answers with no extra work from you.
 
-> **Heads-up:** the age field lives in `index.html` (not `questions.js`) because it powers a safety rule. More on that next.
+> **Heads-up:** the age field lives in `app.js` (the profile step of the sign-up flow), not `questions.js`, because it powers a safety rule. More on that next.
 
 ---
 
@@ -165,9 +165,9 @@ Now matches say **"Chosen by AI"** and the reasons get warmer. Remove the key an
 **The idea:** matched people send a first message; it's stored and shown as a thread. Sending the first message flips the match **status** from `matched` to `confirmed` — that's how the status label on the result screen changes.
 
 - Read/send lives in `functions/api/messages.js`.
-- The chat screen is `public/chat.html`.
+- The chat screen lives in `public/app.js` (the `showChat` / `buildChatShell` section).
 
-**Do this:** in `chat.html`, change the placeholder text of the message box from `"Say hi…"` to your own prompt, e.g. `"Suggest a time to meet…"`.
+**Do this:** in `app.js` (find `buildChatShell`, near `chat-input`), change the placeholder text of the message box from `"Say hi…"` to your own prompt, e.g. `"Suggest a time to meet…"`.
 
 **Check it worked:** match two people, open the chat, send a message. It appears in the thread, and the result screen now shows **Confirmed**.
 

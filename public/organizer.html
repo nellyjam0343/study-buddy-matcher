@@ -2,80 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Study Buddy — Organizer</title>
   <meta name="theme-color" content="#ff5a4d" />
-  <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/icon.svg" />
-  <link rel="apple-touch-icon" href="/icon-192.png" />
-  <link rel="stylesheet" href="/theme.css" />
-  <link rel="stylesheet" href="/styles.css" />
+  <!-- The app is a single page now. This keeps old /organizer links working
+       by sending them to the organizer screen inside the app. -->
+  <script>location.replace("/#/organizer");</script>
 </head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <img class="logo" src="/icon.svg" alt="" />
-      <div>
-        <h1>Organizer view</h1>
-        <p class="sub">Everyone in the pool and every match so far.</p>
-      </div>
-    </div>
-
-    <p class="banner">This page is for whoever runs the event. In a real app you'd
-      put it behind a login — see the README ("Make it yours").</p>
-
-    <div class="card">
-      <h2>Matches (<span id="mcount">0</span>)</h2>
-      <div class="tablescroll"><table id="matches"><tbody></tbody></table></div>
-    </div>
-
-    <div class="card">
-      <h2>The pool (<span id="pcount">0</span>)</h2>
-      <div class="tablescroll"><table id="pool"><tbody></tbody></table></div>
-    </div>
-
-    <p class="nav center"><a href="/index.html">← Sign-up page</a></p>
-  </div>
-
-  <script src="/app.js"></script>
-  <script>
-    function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,(c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
-
-    async function load() {
-      const r = await api("/api/organizer");
-
-      // Matches table
-      const mt = document.querySelector("#matches tbody");
-      document.getElementById("mcount").textContent = r.matches.length;
-      mt.innerHTML =
-        `<tr><th>Pair</th><th>Why</th><th>Source</th><th>Status</th><th>Msgs</th></tr>` +
-        (r.matches.map((m) => `
-          <tr>
-            <td><strong>${esc(m.a_name)}</strong> + <strong>${esc(m.b_name)}</strong></td>
-            <td class="small">${esc(m.reason)}</td>
-            <td><span class="pill ${m.source === "ai" ? "ai" : "rule"}">${m.source}</span></td>
-            <td><span class="pill ${m.status}">${m.status}</span></td>
-            <td>${m.message_count}</td>
-          </tr>`).join("") ||
-          `<tr><td colspan="5" class="muted">No matches yet.</td></tr>`);
-
-      // Pool table
-      const pt = document.querySelector("#pool tbody");
-      document.getElementById("pcount").textContent = r.profiles.length;
-      pt.innerHTML =
-        `<tr><th>Name</th><th>Age</th><th>Answers</th><th>State</th></tr>` +
-        (r.profiles.map((p) => `
-          <tr>
-            <td><strong>${esc(p.name)}</strong><br><span class="small muted">${esc(p.email)}</span></td>
-            <td>${p.age}</td>
-            <td class="small">${esc(Object.entries(p.answers).map(([k,v]) => k + ": " + (Array.isArray(v)?v.join("/"):v)).join(" · "))}</td>
-            <td>${p.matched ? '<span class="pill matched">matched</span>' : '<span class="pill waiting">waiting</span>'}</td>
-          </tr>`).join("") ||
-          `<tr><td colspan="4" class="muted">Nobody has signed up yet.</td></tr>`);
-    }
-
-    load().catch((e) => alert(e.message));
-    setInterval(() => load().catch(() => {}), 6000);
-  </script>
+<body style="margin:0;background:#faf6ef">
+  <noscript><a href="/#/organizer">Open Study Buddy — Organizer</a></noscript>
 </body>
 </html>

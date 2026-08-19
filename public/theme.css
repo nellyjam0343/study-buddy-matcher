@@ -33,10 +33,22 @@
   --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   /* ---- SHAPE & SPACING ---- */
-  --radius: 14px;         /* how round corners are */
-  --gap:    16px;         /* standard spacing unit */
-  --shadow: 0 1px 2px rgba(28,27,26,.06), 0 8px 24px rgba(28,27,26,.06);
-  --maxw:   640px;        /* how wide content gets on big screens */
+  --radius:    14px;      /* how round corners are */
+  --radius-lg: 18px;      /* bigger cards */
+  --gap:       16px;      /* standard spacing unit */
+  --shadow:    0 1px 2px rgba(28,27,26,.06), 0 8px 24px rgba(28,27,26,.06);
+  --shadow-lg: 0 24px 60px rgba(28,27,26,.18);   /* the "phone" frame on desktop */
+  --maxw:      640px;     /* how wide long-form content gets */
+  --appw:      480px;     /* the app column width — phone-like on big screens */
+
+  /* ---- APP SHELL EXTRAS ----
+     Soft, translucent versions of the brand colors (used for highlights,
+     selected options, and status pills). Change the color above and these
+     follow — they're the SAME hue, just faded. */
+  --accent-soft:    rgba(255,90,77,.12);   /* faded coral background */
+  --accent-ring:    rgba(255,90,77,.30);   /* focus glow */
+  --secondary-soft: rgba(15,118,110,.12);  /* faded teal background */
+  --backdrop:       #ece5d8;               /* deeper cream behind the phone frame */
 }
 
 /* ---- COPY (words the app says) live near the top so they're easy to find ----
