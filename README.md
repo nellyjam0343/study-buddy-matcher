@@ -70,6 +70,111 @@ database, so you won't touch the live one while experimenting.)
 
 ---
 
+## Learning instructions
+
+You cloned this app. Your job is to turn it into your **own** matching app. This section is the guide: first **understand** this app, then **plan** yours, then read **your group's block**. You do the hands-on building in **[Make it yours](#make-it-yours)** below.
+
+You'll do most of this by talking to **Claude Code** — the tool where you type a request in plain English and it reads the files, answers you, or makes the change. The prompts below are made to be **copied and pasted in**. Paste one, read the answer, then ask a follow-up in your own words.
+
+**One rule: ask before you cut.** Have Claude Code explain a file first, then change one thing, then check it in the running app. Small steps you understand beat big steps you don't.
+
+### Part 1 — Starter prompts to understand this app
+
+Paste each into Claude Code. The note after each says why it helps.
+
+- **"Explain how the matching works in this app, in plain words."** — the big picture before any detail.
+- **"Walk me through what happens, step by step, when someone signs up."** — follows one person from the form to a match.
+- **"Show me where the questions live and how I change them."** — points you at `questions.js`, the file you'll edit most.
+- **"Explain the difference between the rule match and the AI match, and when each one runs."** — the two layers, and why the app works with no AI key at all.
+- **"In `match.js`, show me the hard rules and explain what each one blocks."** — the safety net: the age gate, the age gap, the opposing-values block.
+- **"Explain the score in `ruleScore` — what earns points, and how many?"** — how the app decides who fits best.
+- **"Where are people's answers stored, and how do I see them?"** — the database, and the `/organizer` page that lists everyone.
+- **"What is the `status` on a match, and when does it change?"** — how a match goes from *matched* to *confirmed*, and how the screen follows.
+- **"How do I run this on my own computer, and how do I put it live?"** — dev and deploy, before you touch anything.
+- **"Don't change anything yet — just tell me the one file I'd edit to [the thing you want to do]."** — learn the map before you cut.
+
+### Part 2 — Starter prompts to plan your own
+
+- **"I am building [your app in one sentence]. Here are my questions: [paste them]. Compared to study-buddy, what do I change, and what can I keep?"** — the whole plan in one prompt.
+- **"What is the one field my match should turn on, and where in the code does that decision live?"** — finds your version of "same subject."
+- **"What is a rule my app must never break, and how do I add it as a hard filter like the age gate?"** — turns a safety promise into a real block.
+- **"Rewrite the `questions.js` list for my app using these questions: [paste them]."** — then check it in the running app.
+- **"My match should rank [what matters most] highest. Show me the exact line in `ruleScore` to change."** — one change, one place.
+- **"Do I actually need an outside data source for this, or can I fake it for a good demo?"** — an honest gut-check (see Part 4).
+
+### Part 3 — Your group's guide
+
+Find your group. Each block says: **what you're building**, **what you change**, **what this template already shows you** (so you're not starting from a blank page), and **what to research**.
+
+**1. Green Italian — music taste**
+- **Your app:** matches people by music taste and listening history.
+- **Questions:** childhood song, all-time favorite, on-repeat right now, a genre you can't stand, personal theme song.
+- **You change:** swap the questions in `questions.js`, then score on shared taste. A shared genre already earns points the same way "same subject" does today.
+- **Template shows you:** `questions.js` (every question lives here) and `ruleScore` in `match.js` (where a shared answer becomes points).
+- **Research:** how to compare **free-text** taste — two people can type the same idea in different words ("Beatles" vs "the beatles"), and an exact-match score misses that. Also a music service for real songs and artists.
+- **API to check — Spotify Web API** (free tier; has artists, genres, tracks). Honest test: free? yes. Has the data? yes. Fits your app? check the sign-in step *before* you wire it in.
+
+**2. Paper Chasers — music taste**
+- **Your app:** matches people by music taste.
+- **Questions:** favorite genre, top 3 artists, go-to sad song, cheer-up song, lyrics vs melody.
+- **The "never" rule:** never connect different eras, and never match two people just because they both named the same obvious top-two artist in a genre.
+- **You change:** the match must **down-rank the obvious, popular overlaps** — a rare shared taste should beat "we both like the #1 artist." That's an edit to `ruleScore` (give the obvious picks fewer points), plus a hard "different eras" block.
+- **Template shows you:** `ruleScore` (where you add or hold back points) and `HARD_RULES` / `isOpposite` in `match.js` (copy that shape for the "different eras" block).
+- **Research:** the same music-API idea (Spotify) — you need popularity data to know which artists are "the obvious ones."
+
+**3. Sports Buddies — sports fans (national)**
+- **Your app:** matches sports fans across the country.
+- **Questions:** favorite sports, teams, players, games you're attending, location, willing to travel, age.
+- **The "never" rules:** never pair different sports (unless a human okays it), never a huge age gap, never an under-18 with an adult.
+- **Template already has your age rules built:** `MIN_AGE` and `MAX_AGE_GAP` in `match.js` are your age-gap rule and your under-age rule already working — edit the numbers, or copy the age-gate rule to make the under-18-with-an-adult version. The "different sports" block is one new `HARD_RULE` that compares the `sport` answer (copy the opposing-values rule).
+- **Research:** a sports data service (teams, schedules).
+- **API to check — a free sports API such as balldontlie or TheSportsDB.** Honest test: free? does it have your teams and schedules? does it fit?
+
+**4. FCF Warriors — Iowa State Fair personality match**
+- **Your app:** matches people by their State Fair personality.
+- **Questions:** first thing you do at the fair, favorite rides, fair food, prizes, favorite memory.
+- **The "never" rule:** never pair a food-first person with a rollercoaster-first person.
+- **You change:** score on shared preferences (the default already does this), and add that one hard "never."
+- **Template shows you:** the opposing-values rule (`isOpposite`, Casual vs Intense) is exactly your food-first vs rides-first block — copy it and compare the "first thing at the fair" answer.
+- **Research:** none. This is a questions-and-scoring change. **No API needed.**
+
+**5. Batman — GameMatch (pickup games)**
+- **Your app:** matches people for pickup games nearby.
+- **Questions:** sport, skill level, location, availability, casual vs competitive.
+- **The "never" rule:** never match a beginner with an advanced player in a **competitive** game.
+- **Template shows you:** the opposing-values rule (`isOpposite`) is the shape of your beginner-vs-advanced block (it reads two answers at once — skill *and* competitive). And the **`status` field** plus the **conversation feature** already solve "nobody is left waiting": a match is *matched* until someone says hi, then *confirmed*, and the "Waiting for a buddy" screen holds people who aren't paired yet.
+- **Components to research:** skill-level matching, a schedule/availability match, notifications, and a status field so nobody is left waiting (you already have a working example of that last one).
+- **API to check — a free maps or places API** to match people by area. Honest test: free? does it give you locations/distance? worth it for your demo?
+
+**6. The AI Fools — Ice Cream Bowl (flavor match with allergy safety)**
+- **Your app:** matches people to ice cream flavors, safely.
+- **Questions:** allergies (with a follow-up for *which* allergy), taste profile, toppings ranked, adventurous yes/no, open to changing your mind yes/no.
+- **The "never" rule:** never match someone to a flavor they're allergic to.
+- **Template already shows you the two hardest parts:**
+  - a **branching question** — the `mode` question (Online → *which platform?*) is exactly the shape of "Any allergies? → *which one?*." Copy it.
+  - a **hard safety filter** — the age gate is exactly the shape of "block any flavor with that allergen." Copy it.
+- **Research:** none needed — it's questions plus one hard filter.
+
+**7. Frozen Team — Dream Jobs (job seekers to ethical employers)**
+- **Your app:** matches job seekers with employers that fit their values.
+- **Questions:** where you want to work, core values, experience, salary needs, deal-breakers.
+- **The "never" rules:** never match on opposing values, and never a company someone had a bad experience with.
+- **Yours is the fuzzy match** — "good fit" and "shared values" are judgment calls a plain rule can't make. That's what the **AI match** in `match.js` is for. Turn it on ([Step 3](#step-3--the-match-the-important-one)); it needs the `ANTHROPIC_API_KEY`. Keep the hard "never" rules in `HARD_RULES` (copy the opposing-values rule for values, and a deal-breaker block for the bad-experience company); let the AI do the softer judging on top.
+- **Research + API (this is the API group):** real job openings and company info.
+- **APIs to check — USAJobs API** (free; US federal jobs), **Adzuna API** (free tier; job listings), **or an open jobs dataset.** Honest test for each: free? does it return the fields you match on (values, role, location)? does it fit your app?
+
+### Part 4 — A note for the API groups
+
+An **API** is just a way for one app to ask another app for data. (Example: your app asks Spotify "what genre is this artist?" and Spotify sends back the answer.) Before you wire one in, check three things:
+
+1. **Is it free?**
+2. **Does it return what you actually need** — the exact facts you match on?
+3. **Is it worth the extra step** for your demo?
+
+If any answer is *no*, skip it. A great app doesn't need an API — this template matches people perfectly well with no outside data at all. Add one only when it clearly makes your app better.
+
+---
+
 ## Make it yours
 
 Do these in order. Each step teaches one idea while you change it, and ends with **how to check it worked**. Update the **PROGRESS** line at the top when you finish one.
