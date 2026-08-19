@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Study Buddy — Chat</title>
+  <meta name="theme-color" content="#ff5a4d" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="stylesheet" href="/theme.css" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <img class="logo" src="/icon.svg" alt="" />
+      <div>
+        <h1 id="title">Conversation</h1>
+        <p class="sub" id="subtitle">Break the ice with your study buddy.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="thread" class="thread"><p class="muted">Loading…</p></div>
+      <form id="send" class="row" style="flex-wrap:nowrap">
+        <input type="text" id="body" placeholder="Say hi…" autocomplete="off" style="flex:1" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+    <p class="nav center"><a href="/result.html">← Back to match</a></p>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    if (!store.profileId) location.href = "/index.html";
+    const me = Number(store.profileId);
+    const thread = document.getElementById("thread");
+
+    async function load() {
+      try {
+        const r = await api("/api/messages?profileId=" + me);
+        if (!r.matchId) {
+          thread.innerHTML = `<p class="muted">You don't have a match yet. <a href="/result.html">Go back</a>.</p>`;
+          return;
+        }
+        document.getElementById("title").textContent = "You + " + r.buddyName;
+        document.getElementById("subtitle").textContent =
+          r.status === "confirmed" ? "You're connected — keep the plan going." : "Send the first message to confirm your match.";
+        thread.innerHTML = r.messages.length
+          ? r.messages.map((m) => `
+              <div class="bubble ${m.sender_id === me ? "mine" : "theirs"}">
+                <span class="meta">${m.sender_id === me ? "You" : r.buddyName} · ${shortTime(m.created_at)}</span>
+                ${escapeHtml(m.body)}
+              </div>`).join("")
+          : `<p class="muted">No messages yet. Say hi to get started!</p>`;
+        thread.scrollTop = thread.scrollHeight;
+      } catch (ex) {
+        thread.innerHTML = `<p style="color:var(--accent)">${ex.message}</p>`;
+      }
+    }
+
+    // Never trust text straight into HTML — escape it first.
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+
+    document.getElementById("send").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = document.getElementById("body");
+      const body = input.value.trim();
+      if (!body) return;
+      input.value = "";
+      try {
+        await api("/api/messages", {
+          method: "POST",
+          body: JSON.stringify({ profileId: me, body }),
+        });
+        load();
+      } catch (ex) { alert(ex.message); }
+    });
+
+    load();
+    setInterval(load, 4000); // simple live-ish refresh
+  </script>
+</body>
+</html>

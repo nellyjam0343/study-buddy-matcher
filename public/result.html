@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Study Buddy — Your match</title>
+  <meta name="theme-color" content="#ff5a4d" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="stylesheet" href="/theme.css" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <img class="logo" src="/icon.svg" alt="" />
+      <div>
+        <h1>Your match</h1>
+        <p class="sub">Here's who we paired you with — and why.</p>
+      </div>
+    </div>
+
+    <div id="panel" class="card">
+      <p class="muted">Finding your match…</p>
+    </div>
+
+    <p class="nav center">
+      <a href="/organizer.html">Organizer view →</a> &nbsp;·&nbsp;
+      <a href="#" id="startover">Start over</a>
+    </p>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    const panel = document.getElementById("panel");
+
+    // If nobody is signed in on this device, send them to sign up.
+    if (!store.profileId) location.href = "/index.html";
+
+    document.getElementById("startover").addEventListener("click", (e) => {
+      e.preventDefault(); store.clear(); location.href = "/index.html";
+    });
+
+    // Ask the backend to match this person. Safe to call repeatedly — it returns
+    // the SAME match once one exists (no double-booking).
+    async function loadMatch() {
+      try {
+        const r = await api("/api/match", {
+          method: "POST",
+          body: JSON.stringify({ profileId: Number(store.profileId) }),
+        });
+        render(r);
+        // Still waiting for enough people? Check again in a few seconds.
+        if (r.status === "waiting") setTimeout(loadMatch, 5000);
+      } catch (ex) {
+        panel.innerHTML = `<p style="color:var(--accent)">${ex.message}</p>`;
+      }
+    }
+
+    function render(r) {
+      if (r.status === "waiting") {
+        panel.innerHTML = `
+          <span class="pill waiting">Waiting</span>
+          <h2 class="mt">Hang tight, ${store.name.split(" ")[0] || "friend"}!</h2>
+          <p class="hint">${r.reason || "We need at least one more person before we can match you. This page will update on its own."}</p>
+          <p class="small muted">Tip: open this app on another device and sign up as a second person to see a match happen.</p>`;
+        return;
+      }
+      // Matched (or already confirmed). Show the buddy, the "why", and the source.
+      const src = r.source === "ai"
+        ? `<span class="pill ai">Chosen by AI</span>`
+        : `<span class="pill rule">Chosen by rules</span>`;
+      const statusPill = r.status === "confirmed"
+        ? `<span class="pill confirmed">Confirmed</span>`
+        : `<span class="pill matched">Matched</span>`;
+      panel.innerHTML = `
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div>${statusPill} ${src}</div>
+          <span class="small muted">match strength: ${r.score}</span>
+        </div>
+        <div class="why">
+          <p class="who">You + ${r.buddy.name}</p>
+          <p style="margin:0">${r.reason}</p>
+        </div>
+        <a class="btn block" href="/chat.html">${r.status === "confirmed" ? "Open conversation" : "Say hi & confirm →"}</a>`;
+    }
+
+    loadMatch();
+  </script>
+</body>
+</html>

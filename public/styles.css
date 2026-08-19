@@ -1,0 +1,105 @@
+/* ==========================================================================
+   styles.css — layout and components. This reads the variables from theme.css.
+   You usually DON'T need to edit this file to rebrand — edit theme.css instead.
+   ========================================================================== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 24px 20px 64px; }
+
+/* Header */
+.top { display: flex; align-items: center; gap: 12px; margin: 8px 0 24px; }
+.logo { width: 40px; height: 40px; border-radius: 10px; }
+.top h1 { font-family: var(--font-display); font-size: 24px; margin: 0; letter-spacing: -0.01em; }
+.top .sub { color: var(--muted); font-size: 14px; margin: 2px 0 0; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: var(--gap);
+}
+.card h2 { font-family: var(--font-display); font-size: 20px; margin: 0 0 4px; }
+.card p.hint { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+
+/* Form fields */
+label.field { display: block; margin-bottom: 16px; }
+label.field > span { display: block; font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+label.field > .sub { font-weight: 400; color: var(--muted); font-size: 13px; }
+input[type=text], input[type=email], input[type=number], select, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;               /* 16px stops iOS from zooming on focus */
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,90,77,.15); }
+textarea { resize: vertical; min-height: 80px; }
+
+/* Multi-select checkbox rows */
+.choices { display: grid; gap: 8px; }
+.choice {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer;
+}
+.choice input { width: auto; }
+.choice:hover { border-color: var(--accent); }
+
+/* Buttons */
+button, .btn {
+  display: inline-block; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+  font-family: inherit; font-size: 16px; font-weight: 600;
+  padding: 13px 20px; border-radius: 12px; text-decoration: none;
+}
+button:disabled { opacity: .5; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btn.block, button.block { width: 100%; text-align: center; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Status pills */
+.pill { display: inline-block; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+.pill.matched   { background: rgba(255,90,77,.12);  color: var(--accent); }
+.pill.confirmed { background: rgba(15,118,110,.12); color: var(--ok); }
+.pill.waiting   { background: rgba(180,83,9,.12);   color: var(--wait); }
+.pill.ai   { background: rgba(15,118,110,.12); color: var(--secondary); }
+.pill.rule { background: rgba(28,27,26,.08);   color: var(--muted); }
+
+/* The "why you matched" reason box */
+.why { background: var(--bg); border-left: 3px solid var(--accent); border-radius: 8px; padding: 14px 16px; margin: 14px 0; }
+.why .who { font-family: var(--font-display); font-size: 22px; margin: 0 0 6px; }
+
+/* Chat thread */
+.thread { display: grid; gap: 10px; margin: 16px 0; }
+.bubble { max-width: 80%; padding: 10px 14px; border-radius: 14px; }
+.bubble.mine  { background: var(--accent); color: var(--accent-ink); justify-self: end; border-bottom-right-radius: 4px; }
+.bubble.theirs{ background: var(--surface); border: 1px solid var(--line); justify-self: start; border-bottom-left-radius: 4px; }
+.bubble .meta { display: block; font-size: 11px; opacity: .7; margin-bottom: 2px; }
+
+/* Organizer tables */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.tablescroll { overflow-x: auto; }
+
+/* Utility */
+.muted { color: var(--muted); }
+.center { text-align: center; }
+.mt { margin-top: 16px; }
+.small { font-size: 13px; }
+a { color: var(--accent); }
+.nav { margin-top: 24px; font-size: 14px; }
+.banner { background: rgba(15,118,110,.1); border: 1px solid rgba(15,118,110,.25); color: var(--secondary); padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 16px; }
